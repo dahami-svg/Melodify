@@ -1,0 +1,64 @@
+@import url('https://fonts.googleapis.com/css2?family=Epilogue:wght@100;200;300;400;500;600;700;800;900&family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-headline: "Epilogue", sans-serif;
+
+  --color-surface: #0e0e0e;
+  --color-surface-dim: #0e0e0e;
+  --color-surface-container: #191919;
+  --color-surface-container-low: #131313;
+  --color-surface-container-high: #1f1f1f;
+  --color-surface-container-highest: #262626;
+  --color-surface-variant: rgba(38, 38, 38, 0.6);
+  
+  --color-primary: #cc97ff;
+  --color-primary-dim: #9c48ea;
+  --color-primary-fixed: #c284ff;
+  --color-on-primary-fixed: #000000;
+  
+  --color-secondary: #7799ff;
+  --color-secondary-dim: #316bf3;
+  --color-secondary-container: #0053db;
+  
+  --color-tertiary: #ff86c3;
+  --color-tertiary-dim: #f271b5;
+  --color-tertiary-container: #f673b7;
+  --color-on-tertiary-container: #4a002f;
+
+  --color-outline: #757575;
+  --color-outline-variant: #484848;
+  
+  --radius-md: 1.5rem;
+  --radius-lg: 2rem;
+  --radius-xl: 3rem;
+}
+
+@layer base {
+  body {
+    @apply bg-surface text-white font-sans antialiased;
+  }
+}
+
+@layer utilities {
+  .glass {
+    @apply bg-surface-variant backdrop-blur-[24px];
+  }
+  .neon-glow {
+    box-shadow: 0 0 20px rgba(204, 151, 255, 0.3);
+  }
+  .neon-glow-primary {
+    box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
+  }
+  .text-glow {
+    text-shadow: 0 0 12px rgba(204, 151, 255, 0.3);
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
