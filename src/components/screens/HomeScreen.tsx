@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, Bell, Play, ChevronLeft, ChevronRight, Pause, Shuffle, SkipBack, SkipForward, Heart, Home, MessageSquare, Library, User, Send, Sparkles } from 'lucide-react';
+import { Search, Bell, Play, ChevronLeft, ChevronRight, Pause, Shuffle, SkipBack, SkipForward, Heart, Home, MessageSquare, Library, User, Send, Sparkles, X } from 'lucide-react';
 import { Button } from '@/src/components/ui/Button';
 import { Card } from '@/src/components/ui/Card';
 import { cn } from '@/src/lib/utils';
@@ -18,6 +18,10 @@ export default function HomeScreen({ onLogout, key }: { onLogout: () => void, ke
   const [recentlyPlayed, setRecentlyPlayed] = useState<any[]>([]);
   const [trendingPlaylists, setTrendingPlaylists] = useState<any[]>([]);
   const [currentSong, setCurrentSong] = useState<any>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const audioRef = React.useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
     fetch('http://localhost:5000/api/music/home')
@@ -25,11 +29,20 @@ export default function HomeScreen({ onLogout, key }: { onLogout: () => void, ke
       .then(data => {
         setRecentlyPlayed(data.recentlyPlayed);
         setTrendingPlaylists(data.trendingPlaylists);
-        // Default first song to mini player if none selected
-        if (data.recentlyPlayed.length > 0) setCurrentSong(data.recentlyPlayed[0]);
+        // We don't set currentSong here anymore to keep the player hidden initially
       })
       .catch(err => console.error("Error fetching home data:", err));
   }, []);
+
+  useEffect(() => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.play().catch(e => console.error("Playback error", e));
+      } else {
+        audioRef.current.pause();
+      }
+    }
+  }, [isPlaying, currentSong]);
 
   const handleFeedbackSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -161,7 +174,12 @@ export default function HomeScreen({ onLogout, key }: { onLogout: () => void, ke
               <h3 className="font-headline text-6xl font-extrabold tracking-tighter leading-tight">THE VELVET <br/>ECLIPSE</h3>
               <p className="text-zinc-400 mt-4 text-lg max-w-md">Experience the haunting new album from Luna Ray. Now streaming exclusively on Melodify.</p>
             </div>
-            <Button size="xl" className="gap-3" onClick={(e) => { e.stopPropagation(); setShowPlayer(true); }}>
+            <Button size="xl" className="gap-3" onClick={(e) => { 
+              e.stopPropagation(); 
+              if (!currentSong) setCurrentSong(recentlyPlayed[0]);
+              setIsPlaying(true);
+              setShowPlayer(true); 
+            }}>
               <Play className="fill-current" />
               Listen Now
             </Button>
@@ -182,6 +200,7 @@ export default function HomeScreen({ onLogout, key }: { onLogout: () => void, ke
                 className="p-3 flex items-center gap-4 hover:bg-surface-container-highest transition-colors cursor-pointer group" 
                 onClick={() => {
                   setCurrentSong(item);
+                  setIsPlaying(true);
                   setShowPlayer(true);
                 }}
               >
@@ -275,35 +294,65 @@ export default function HomeScreen({ onLogout, key }: { onLogout: () => void, ke
       </main>
 
       {/* Mini Player */}
-      <div 
-        onClick={() => setShowPlayer(true)}
-        className="fixed bottom-[112px] left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-4xl z-40 glass rounded-lg p-3 flex items-center justify-between shadow-[0_8px_32px_rgba(0,0,0,0.8)] border border-white/5 cursor-pointer hover:bg-surface-variant/80 transition-all"
-      >
-        <div className="flex items-center gap-4 truncate">
-          <div className="w-12 h-12 rounded-md overflow-hidden flex-shrink-0">
-            <img 
-              className="w-full h-full object-cover" 
-              src={currentSong?.img || "https://lh3.googleusercontent.com/aida-public/AB6AXuC1s3pjWExy3dZFO8DceJdPl-L2NS6cidk4zkum96sCM6f2UXzZy0DYo68ZJKyiawgD9Fi5pA8-sa2oCuRQrmfYecDl4-SAOp3AHOJpO7RvG2HCrmPuaw-46xZQKlYeDDhLKNzaRDir_beliRIYWtez9mS-hAevjfkyMR9Q-bx67fsHQUH4Yh_iI-5zMvI6qH7ANM3G1fTtWhzp3pvt6GbmqHj-ennChE8y1tX3IOzupJ4P3du03ZKkf_s215lOrA7BuoxA7OeJEQ"}
-              alt="Song"
-              referrerPolicy="no-referrer"
-            />
-          </div>
-          <div className="truncate">
-            <p className="font-bold text-sm truncate">{currentSong?.title || "Stardust Echoes"}</p>
-            <p className="text-zinc-400 text-xs truncate">{currentSong?.artist || currentSong?.sub || "Luna Ray"}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 sm:gap-6" onClick={(e) => e.stopPropagation()}>
-          <button className="text-zinc-400 hover:text-white hidden sm:block"><Shuffle className="w-5 h-5" /></button>
-          <button className="text-zinc-400 hover:text-white"><SkipBack className="w-5 h-5 fill-current" /></button>
-          <button className="w-10 h-10 bg-white text-black rounded-full flex items-center justify-center scale-100 active:scale-90 transition-transform">
-            <Pause className="w-5 h-5 fill-current" />
-          </button>
-          <button className="text-zinc-400 hover:text-white"><SkipForward className="w-5 h-5 fill-current" /></button>
-          <button className="text-tertiary ml-2 hidden sm:block"><Heart className="w-5 h-5 fill-current" /></button>
-        </div>
-        <div className="absolute bottom-0 left-0 h-[2px] bg-primary rounded-full transition-all" style={{ width: '45%' }}></div>
-      </div>
+      <AnimatePresence>
+        {currentSong && (
+          <motion.div 
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            onClick={() => setShowPlayer(true)}
+            className="fixed bottom-[112px] left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-4xl z-40 glass rounded-lg p-3 flex items-center justify-between shadow-[0_8px_32px_rgba(0,0,0,0.8)] border border-white/5 cursor-pointer hover:bg-surface-variant/80 transition-all"
+          >
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsPlaying(false);
+                setCurrentSong(null);
+              }}
+              className="absolute -top-2 -right-2 w-6 h-6 bg-surface-container rounded-full flex items-center justify-center border border-white/10 shadow-lg hover:bg-zinc-800 transition-colors z-50"
+            >
+              <X className="w-4 h-4 text-zinc-400" />
+            </button>
+            <div className="flex items-center gap-4 truncate">
+              <div className="w-12 h-12 rounded-md overflow-hidden flex-shrink-0">
+                <img 
+                  className="w-full h-full object-cover" 
+                  src={currentSong?.img}
+                  alt="Song"
+                  referrerPolicy="no-referrer"
+                />
+              </div>
+              <div className="truncate">
+                <p className="font-bold text-sm truncate">{currentSong?.title}</p>
+                <p className="text-zinc-400 text-xs truncate">{currentSong?.artist || currentSong?.sub}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 sm:gap-6" onClick={(e) => e.stopPropagation()}>
+              <button className="text-zinc-400 hover:text-white hidden sm:block"><Shuffle className="w-5 h-5" /></button>
+              <button className="text-zinc-400 hover:text-white"><SkipBack className="w-5 h-5 fill-current" /></button>
+              <button 
+                onClick={() => setIsPlaying(!isPlaying)}
+                className="w-10 h-10 bg-white text-black rounded-full flex items-center justify-center scale-100 active:scale-90 transition-transform"
+              >
+                {isPlaying ? <Pause className="w-5 h-5 fill-current" /> : <Play className="w-5 h-5 fill-current ml-0.5" />}
+              </button>
+              <button className="text-zinc-400 hover:text-white"><SkipForward className="w-5 h-5 fill-current" /></button>
+              <button className="text-tertiary ml-2 hidden sm:block"><Heart className="w-5 h-5 fill-current" /></button>
+            </div>
+            <div 
+              className="absolute bottom-0 left-0 h-[2px] bg-primary rounded-full transition-all" 
+              style={{ width: `${(currentTime / duration) * 100 || 0}%` }}
+            ></div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <audio 
+        ref={audioRef} 
+        src={currentSong?.audioUrl} 
+        onTimeUpdate={() => audioRef.current && setCurrentTime(audioRef.current.currentTime)}
+        onLoadedMetadata={() => audioRef.current && setDuration(audioRef.current.duration)}
+      />
 
       {/* Bottom Nav (Mobile Only) */}
       <nav className="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-6 pb-8 pt-4 bg-[#191919]/70 backdrop-blur-[40px] rounded-t-[2.5rem] shadow-[0_-4px_24px_rgba(168,85,247,0.15)]">
@@ -362,7 +411,15 @@ export default function HomeScreen({ onLogout, key }: { onLogout: () => void, ke
       {/* Overlay Screens */}
       <AnimatePresence>
         {showPlayer && (
-          <PlayerScreen key="player" song={currentSong} onClose={() => setShowPlayer(false)} />
+          <PlayerScreen 
+            key="player" 
+            song={currentSong} 
+            isPlaying={isPlaying}
+            setIsPlaying={setIsPlaying}
+            currentTime={currentTime}
+            duration={duration}
+            onClose={() => setShowPlayer(false)} 
+          />
         )}
         {activeTab === 'search' && (
           <SearchScreen key="search" onClose={() => setActiveTab('home')} />

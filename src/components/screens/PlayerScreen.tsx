@@ -2,50 +2,18 @@ import { useState, useRef, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { ChevronDown, MoreHorizontal, Shuffle, SkipBack, Play, Pause, SkipForward, Repeat, Share2, ListMusic, Heart, Volume2 } from 'lucide-react';
 
-export default function PlayerScreen({ onClose, song, key }: { onClose: () => void, song: any, key?: string }) {
-  const [isPlaying, setIsPlaying] = useState(true);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const audioRef = useRef<HTMLAudioElement>(null);
-
-  useEffect(() => {
-    if (audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.play().catch(e => console.error("Playback error", e));
-      } else {
-        audioRef.current.pause();
-      }
-    }
-  }, [isPlaying, song]);
-
-  const onTimeUpdate = () => {
-    if (audioRef.current) {
-      setCurrentTime(audioRef.current.currentTime);
-    }
-  };
-
-  const onLoadedMetadata = () => {
-    if (audioRef.current) {
-      setDuration(audioRef.current.duration);
-    }
-  };
-
+export default function PlayerScreen({ onClose, song, isPlaying, setIsPlaying, currentTime, duration, key }: { onClose: () => void, song: any, isPlaying: boolean, setIsPlaying: (val: boolean) => void, currentTime: number, duration: number, key?: string }) {
   const formatTime = (time: number) => {
     const mins = Math.floor(time / 60);
     const secs = Math.floor(time % 60);
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
+
   return (
     <motion.div 
       initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
       className="fixed inset-0 z-[100] bg-surface flex flex-col"
     >
-      <audio 
-        ref={audioRef} 
-        src={song?.audioUrl} 
-        onTimeUpdate={onTimeUpdate} 
-        onLoadedMetadata={onLoadedMetadata}
-      />
       <div className="absolute inset-0 z-0">
         <img className="w-full h-full object-cover blur-[100px] opacity-30 scale-150" src={song?.img} alt="" referrerPolicy="no-referrer" />
         <div className="absolute inset-0 bg-gradient-to-b from-surface/40 via-surface/80 to-surface"></div>
@@ -71,7 +39,7 @@ export default function PlayerScreen({ onClose, song, key }: { onClose: () => vo
         </div>
         <div className="w-full max-w-sm space-y-2 mb-10">
           <div className="relative h-2 bg-zinc-800 rounded-full overflow-hidden">
-            <div className="absolute top-0 left-0 h-full bg-primary" style={{ width: `${(currentTime / duration) * 100}%` }}></div>
+            <div className="absolute top-0 left-0 h-full bg-primary" style={{ width: `${(currentTime / duration) * 100 || 0}%` }}></div>
           </div>
           <div className="flex justify-between text-[10px] font-bold tracking-widest text-zinc-500 uppercase">
             <span>{formatTime(currentTime)}</span><span>{formatTime(duration)}</span>
